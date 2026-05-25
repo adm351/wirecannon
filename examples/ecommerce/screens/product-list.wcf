@@ -1,0 +1,53 @@
+# screens/product-list.wcf
+# owner=product-list
+
+[Header]                                                           # region=header anchor=true
+  [Row grow align:space-between]
+    [Branding] 
+    [Row align:end]
+      [Nav orientation:horizontal]                                   # component=nav-primary role=navigation
+        [Button label:"Home" variant:ghost target:home]
+        [Button label:"Products" variant:ghost target:product-list]
+      [ButtonGroup align:right]                                      # region=header.actions
+        [Button label:"Cart" variant:ghost target:cart-drawer]       # action=cart-open triggers=cart-drawer priority=secondary
+        [Button label:"Login" variant:ghost target:auth-modal]       # action=auth-login priority=secondary
+        [Button label:"Sign Up" variant:primary target:auth-modal]   # action=auth-signup priority=primary anchor=true
+
+[Row]
+  [Sidebar position:left]                                          # region=sidebar role=search
+    [Section id:filters]                                           # region=sidebar.filters
+      [Text content:"Filters" variant:subheading]
+      [Section id:category]                                        # region=sidebar.filters.category
+        [Text content:"Category" variant:label]
+        [List variant:unordered]                                   # component=category-filter state=populated
+      [Section id:price-range]                                     # region=sidebar.filters.price-range
+        [Text content:"Price Range" variant:label]
+        [Input type:number placeholder:"Min"]
+        [Input type:number placeholder:"Max"]                      # depends-on=sidebar.filters.price-range
+      [Divider orientation:horizontal]
+      [ButtonGroup align:right]
+        [Button label:"Apply" variant:primary]                     # action=filter-apply
+        [Button label:"Clear" variant:ghost]                       # action=filter-clear
+
+  [Main]                                                           # region=main
+    [Section id:results]                                           # region=main.results
+      [Row align:space-between]
+        [Text content:"Products" variant:heading]
+        [Row gap:sm]
+          [Input type:search placeholder:"Search products"]        # component=search-bar action=search-apply depends-on=sidebar.filters
+          [ButtonDropdown label:"Sort" variant:ghost options:"Price: Low to High,Price: High to Low,Newest,Bestselling"] # component=sort-control
+      [Grid cols:3 gap:md]                                         # component=product-grid state=populated todo="confirm col count at tablet breakpoint"
+        [Card id:product-card]                                     # component=product-card
+          [Image alt:"Product image"]
+          [Text content:"Product name" variant:subheading]
+          [Text content:"$0.00" variant:body]
+          [Badge label:"In Stock" variant:success]                 # component=stock-status state=populated
+          [Button label:"Add to Cart" variant:primary]             # action=cart-add priority=primary
+
+[Footer]                                                           # region=footer anchor=true
+  [Row align:space-between]
+    [Nav orientation:horizontal]                                   # component=nav-secondary role=navigation
+      [Button label:"About" variant:ghost]
+      [Button label:"Help" variant:ghost]
+      [Button label:"Privacy" variant:ghost]
+    [Text content:"© 2026 Acme Store" variant:caption]

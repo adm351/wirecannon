@@ -1,0 +1,57 @@
+import { ParsedNode } from './types'
+
+function parseAttrs(s: string): Record<string, string | true> {
+  const result: Record<string, string | true> = {}
+  let i = 0
+  s = s.trim()
+  while (i < s.length) {
+    while (i < s.length && s[i] === ' ') i++
+    if (i >= s.length) break
+    let key = ''
+    while (i < s.length && s[i] !== ':' && s[i] !== ' ') key += s[i++]
+    if (!key) break
+    if (i >= s.length || s[i] === ' ') { result[key] = true; continue }
+    i++ // skip ':'
+    let value = ''
+    if (i < s.length && s[i] === '"') {
+      i++
+      while (i < s.length && s[i] !== '"') value += s[i++]
+      if (i < s.length) i++
+    } else {
+      while (i < s.length && s[i] !== ' ') value += s[i++]
+    }
+    result[key] = value
+  }
+  return result
+}
+
+function parseLine(line: string, lineNum: number): ParsedNode | null {
+  const trimmed = line.trimStart()
+  if (!trimmed || trimmed.startsWith('#')) return null
+  const indent = line.length - trimmed.length
+  if (!trimmed.startsWith('[')) {
+    return { type: '_flow', attrs: {}, children: [], line: lineNum, indent, isFlowLine: true }
+  }
+  const closeIdx = trimmed.indexOf(']')
+  if (closeIdx < 0) return null
+  const inner = trimmed.slice(1, closeIdx)
+  const spaceIdx = inner.search(/\s/)
+  const type = spaceIdx < 0 ? inner.trim() : inner.slice(0, spaceIdx).trim()
+  const attrStr = spaceIdx < 0 ? '' : inner.slice(spaceIdx + 1)
+  return { type, attrs: parseAttrs(attrStr), children: [], line: lineNum, indent, isFlowLine: false }
+}
+
+export function parseFile(content: string): ParsedNode[] {
+  const lines = content.split('\n')
+  const roots: ParsedNode[] = []
+  const stack: Array<{ indent: number; node: ParsedNode }> = []
+  for (let i = 0; i < lines.length; i++) {
+    const node = parseLine(lines[i], i + 1)
+    if (!node) continue
+    while (stack.length > 0 && stack[stack.length - 1].indent >= node.indent) stack.pop()
+    if (stack.length === 0) roots.push(node)
+    else stack[stack.length - 1].node.children.push(node)
+    if (!node.isFlowLine) stack.push({ indent: node.indent, node })
+  }
+  return roots
+}

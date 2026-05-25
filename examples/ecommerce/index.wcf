@@ -1,0 +1,48 @@
+# Acme Store — Project Manifest
+# version: 1
+# Always read this file first before reading or modifying any screen or overlay
+
+[Project name:"Acme Store" version:1]   # description="B2C ecommerce storefront"
+
+[Screens]
+  [Screen id:home           label:"Home"           file:screens/home.wcf           entry:true]
+  [Screen id:product-list   label:"Product List"   file:screens/product-list.wcf]
+  [Screen id:product-detail label:"Product Detail" file:screens/product-detail.wcf]
+  [Screen id:checkout       label:"Checkout"       file:screens/checkout.wcf]
+  [Screen id:order-confirm  label:"Order Confirm"  file:screens/order-confirm.wcf]
+  [Screen id:support        label:"Support"        file:screens/support.wcf]
+
+[Overlays]
+  [Overlay id:auth-modal     label:"Auth Modal"     file:overlays/auth-modal.wcf     scope:global]
+  [Overlay id:cart-drawer    label:"Cart Drawer"    file:overlays/cart-drawer.wcf    scope:global]
+  [Overlay id:confirm-dialog label:"Confirm Dialog" file:overlays/confirm-dialog.wcf scope:global]
+
+[Flows]
+  [Flow id:browse label:"Browse and Discover"]
+    home → product-list → product-detail          # happy-path=true
+
+  [Flow id:purchase label:"Purchase Flow"]
+    product-detail
+      | authenticated   → checkout                # happy-path=true
+      | unauthenticated → auth-modal → checkout   # frequency=high
+    checkout
+      | confirmed → order-confirm                 # happy-path=true
+      | cancelled → product-detail                # back-navigation=true
+
+  [Flow id:checkout-failure label:"Payment Failure"]
+    checkout
+      | success  → order-confirm                  # happy-path=true
+      | declined → checkout                       # retry=true
+      | error    → support                        # frequency=low
+
+  [Flow id:auth label:"Authentication"]
+    auth-modal
+      | login    → home                           # condition=existing-user
+      | register → home                           # condition=new-user
+
+  [Flow id:cart label:"Cart Management"]
+    product-detail
+      | add-to-cart → cart-drawer                 # triggers=cart-drawer
+    cart-drawer
+      | continue-shopping → product-list          # back-navigation=true
+      | checkout          → checkout              # happy-path=true

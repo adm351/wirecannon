@@ -1,0 +1,51 @@
+{
+  "name": "wirecannon",
+  "displayName": "Wirecannon",
+  "description": "Wirecannon language support — linting, autocomplete, and preview",
+  "version": "0.1.0",
+  "publisher": "wirecannon",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Programming Languages", "Linters"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "wirecannon",
+        "aliases": ["Wirecannon", "wcf"],
+        "extensions": [".wcf"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "wirecannon.showPreview",
+        "title": "Wirecannon: Show Preview",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "wirecannon.showPreview",
+          "when": "resourceExtname == .wcf",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --external:vscode --format=cjs --minify",
+    "check": "tsc --noEmit",
+    "dev": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --platform=node --external:vscode --format=cjs --sourcemap --watch",
+    "package": "npm run build && vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "@wirecannon/linter": "file:../linter",
+    "@wirecannon/renderer": "file:../renderer",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.0.0"
+  }
+}

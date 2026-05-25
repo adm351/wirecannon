@@ -1,0 +1,18 @@
+{
+  "name": "@wirecannon/linter",
+  "version": "0.1.0",
+  "description": "Validates .wcf files against the Wirecannon grammar specification",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "wirecannon-lint": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

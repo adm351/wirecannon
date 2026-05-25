@@ -1,0 +1,26 @@
+# overlays/cart-drawer.wcf
+# owner=cart-drawer
+
+[Overlay type:drawer anchor:right]                                  # region=cart role=checkout-flow
+
+  [Header]                                                          # region=cart.header anchor=true
+    [Row align:space-between]
+      [Text content:"Your Cart" variant:heading]
+      [Button label:"Close" variant:ghost]                          # action=cart-close
+
+  [Main]                                                            # region=cart.main
+    [Section id:items]                                              # region=cart.items state=populated
+      [List variant:unordered]                                      # component=cart-items note="each item: image, name, qty, price, remove"
+    [Section id:empty]                                              # region=cart.empty state=empty hidden=true
+      [Text content:"Your cart is empty" variant:body]
+      [Button label:"Continue Shopping" variant:secondary target:product-list] # action=cart-continue
+
+  [Footer]                                                          # region=cart.footer anchor=true
+    [Col gap:sm]
+      [Row align:space-between]
+        [Text content:"Subtotal" variant:label]
+        [Text content:"$0.00" variant:body]                         # component=cart-subtotal depends-on=cart.items
+      [Divider orientation:horizontal]
+      [ButtonGroup align:right]
+        [Button label:"Continue Shopping" variant:ghost target:product-list] # action=cart-continue priority=secondary
+        [Button label:"Checkout" variant:primary target:checkout]             # action=checkout-begin priority=primary anchor=true

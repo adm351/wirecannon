@@ -1,0 +1,21 @@
+{
+  "name": "@wirecannon/renderer",
+  "version": "0.1.0",
+  "description": "Reference HTML/SVG renderer for Wirecannon .wcf files",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "wirecannon-render": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "vite": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,33 @@
+# overlays/auth-modal.wcf
+# owner=auth-modal
+
+[Overlay type:modal]                                               # region=auth role=authentication
+
+  [Header]                                                         # region=auth.header anchor=true
+    [Row align:space-between]
+      [Text content:"Welcome back" variant:heading]
+      [Button label:"Close" variant:ghost]                         # action=auth-close
+
+  [Main]                                                           # region=auth.main
+    [Section id:login]                                             # region=auth.login state=populated
+      [Form id:login-form]
+        [Input type:email placeholder:"Email address"]
+        [Input type:password placeholder:"Password"]
+        [ButtonGroup align:right]
+          [Button label:"Sign In" variant:primary]                 # action=auth-login priority=primary anchor=true
+      [Divider orientation:horizontal]
+      [Row align:center]
+        [Text content:"No account?" variant:caption]
+        [Button label:"Register" variant:ghost]                    # action=auth-switch-register
+
+    [Section id:register]                                          # region=auth.register state=empty hidden=true
+      [Form id:register-form]
+        [Input type:text placeholder:"Full name"]
+        [Input type:email placeholder:"Email address"]
+        [Input type:password placeholder:"Password"]
+        [ButtonGroup align:right]
+          [Button label:"Create Account" variant:primary]          # action=auth-signup priority=primary anchor=true
+      [Divider orientation:horizontal]
+      [Row align:center]
+        [Text content:"Have an account?" variant:caption]
+        [Button label:"Sign In" variant:ghost]                     # action=auth-switch-login
