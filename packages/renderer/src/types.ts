@@ -5,6 +5,7 @@ export interface ParsedNode {
   line: number
   indent: number
   isFlowLine: boolean
+  raw?: string  // raw text content for non-component lines (flow/table rows)
 }
 
 export interface ColorVariant {

@@ -141,9 +141,10 @@ function walkNode(node: ParsedNode, parentType: string | null, sectionDepth: num
     }
   }
 
-  // Rule 10: pure leaf must have no children (permittedChildren returns empty set)
+  // Rule 10: leaf/flow-only components must not have component children
   const permitted = permittedChildren(node.type)
-  if (permitted.size === 0 && node.children.length > 0) {
+  const componentChildren = node.children.filter(c => !c.isFlowLine)
+  if (permitted.size === 0 && componentChildren.length > 0) {
     ctx.errors.push(err(ctx.file, node.line, 10, `[${node.type}] is a leaf component and must not have children`))
   }
 

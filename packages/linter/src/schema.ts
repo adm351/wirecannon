@@ -69,6 +69,7 @@ export const COMPONENTS: Record<string, ComponentSchema> = {
       label: { required: true, type: 'string' },
       variant: { required: false, type: { enum: ['primary', 'secondary', 'ghost', 'danger'] } },
       target: { required: false, type: 'string' },
+      align: { required: false, type: { enum: ['left', 'center', 'right'] } },
     },
   },
   ButtonGroup: {
@@ -131,12 +132,11 @@ export const COMPONENTS: Record<string, ComponentSchema> = {
   },
   Table: {
     attrs: {
-      cols: { required: true, type: 'string' },
       filter: { required: false, type: 'boolean' },
       pagination: { required: false, type: 'boolean' },
+      rowlink: { required: false, type: 'boolean' },
     },
   },
-
   // Overlay file root
   Overlay: {
     attrs: {
@@ -147,8 +147,8 @@ export const COMPONENTS: Record<string, ComponentSchema> = {
 }
 
 export const LAYOUT = new Set(['Row', 'Col', 'Grid', 'Stack'])
-export const STRUCTURE = new Set(['Header', 'Footer', 'Sidebar', 'Main', 'Section', 'Nav', 'Card'])
-export const LEAF = new Set(['Button', 'ButtonGroup', 'ButtonDropdown', 'Input', 'Text', 'Image', 'Branding', 'List', 'Badge', 'Icon', 'Divider', 'Form', 'Table'])
+export const STRUCTURE = new Set(['Header', 'Footer', 'Sidebar', 'Main', 'Section', 'Nav', 'Card', 'Table'])
+export const LEAF = new Set(['Button', 'ButtonGroup', 'ButtonDropdown', 'Input', 'Text', 'Image', 'Branding', 'List', 'Badge', 'Icon', 'Divider', 'Form'])
 
 const ALL = [...LAYOUT, ...STRUCTURE, ...LEAF]
 const LAYOUT_ARR = [...LAYOUT]
@@ -168,15 +168,17 @@ export function permittedChildren(parentType: string): Set<string> {
     case 'Footer':
       return new Set(['Nav', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Sidebar':
-      return new Set(['Section', ...LAYOUT_ARR, ...LEAF_ARR])
+      return new Set(['Section', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Main':
-      return new Set(['Section', 'Card', ...LAYOUT_ARR, ...LEAF_ARR])
+      return new Set(['Section', 'Card', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Section':
-      return new Set(['Section', 'Card', ...LAYOUT_ARR, ...LEAF_ARR])
+      return new Set(['Section', 'Card', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Nav':
       return new Set(LEAF_ARR)
     case 'Card':
-      return new Set(['Header', 'Footer', 'Main', 'Section', ...LAYOUT_ARR, ...LEAF_ARR])
+      return new Set(['Header', 'Footer', 'Main', 'Section', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
+    case 'Table':
+      return new Set() // row content is expressed as pipe-delimited flow lines, not component children
     case 'ButtonGroup':
       return new Set(['Button'])
     case 'Form':

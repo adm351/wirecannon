@@ -1,4 +1,5 @@
 import { ParsedNode, RenderOptions, Theme } from './types'
+import { parseFile } from './parser'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,8 @@ function renderNode(node: ParsedNode, opts: RenderOptions): string {
       const label = attr(node.attrs.label)
       const variant = attr(node.attrs.variant) || 'secondary'
       const target = attr(node.attrs.target)
-      const cls = `wcf-button wcf-button--${variant}`
+      const align = attr(node.attrs.align)
+      const cls = `wcf-button wcf-button--${variant}${align && align !== 'center' ? ` wcf-button--align-${align}` : ''}`
       const href = target ? (opts.targets?.get(target) ?? `#${target}`) : undefined
       if (href) return `<a href="${esc(href)}" class="${cls}">${esc(label)}</a>`
       return `<button type="button" class="${cls}">${esc(label)}</button>`
@@ -155,16 +157,19 @@ function renderNode(node: ParsedNode, opts: RenderOptions): string {
       return `<form class="wcf-form"${id ? ` id="${id}"` : ''}>${renderChildren(node, opts)}</form>`
     }
     case 'Table': {
-      const cols = attr(node.attrs.cols)
-      const colNames = cols ? cols.split(',').map(c => c.trim()) : ['Column']
+      const rowLines = node.children.filter(c => c.isFlowLine && c.raw)
       const filter = node.attrs.filter
       const pagination = node.attrs.pagination
-      const thead = `<thead><tr>${colNames.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>`
-      const tbody = `<tbody>${[1,2,3].map(() =>
-        `<tr>${colNames.map(() => '<td>—</td>').join('')}</tr>`
+      const rowlink = node.attrs.rowlink
+      const rowCls = rowlink ? ' class="wcf-table__row--link"' : ''
+      const [headerLine, ...dataLines] = rowLines
+      const headers = headerLine ? headerLine.raw!.split('|').map(s => s.trim()) : ['Column']
+      const thead = `<thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>`
+      const tbody = `<tbody>${dataLines.map(row =>
+        `<tr${rowCls}>${row.raw!.split('|').map(cell => `<td>${renderCellContent(cell, opts)}</td>`).join('')}</tr>`
       ).join('')}</tbody>`
       const filterRow = filter ? `<div class="wcf-table-filter"><input class="wcf-input" placeholder="Filter…" style="max-width:240px"></div>` : ''
-      const paginationRow = pagination ? `<div class="wcf-table-pagination"><button class="wcf-button wcf-button--ghost">← Prev</button><span>Page 1</span><button class="wcf-button wcf-button--ghost">Next →</button></div>` : ''
+      const paginationRow = pagination ? `<div class="wcf-table-pagination"><button class="wcf-button wcf-button--ghost">&#8592; Prev</button><span>Page 1</span><button class="wcf-button wcf-button--ghost">Next &#8594;</button></div>` : ''
       return `<div class="wcf-table-wrap">${filterRow}<table class="wcf-table">${thead}${tbody}</table>${paginationRow}</div>`
     }
     case 'Overlay': {
@@ -175,6 +180,17 @@ function renderNode(node: ParsedNode, opts: RenderOptions): string {
     }
     default: return ''
   }
+}
+
+function renderCellContent(cell: string, opts: RenderOptions): string {
+  const trimmed = cell.trim()
+  if (!trimmed) return '&nbsp;'
+  // Inline component: parse and render the first node
+  if (trimmed.startsWith('[') && trimmed.includes(']')) {
+    const nodes = parseFile(trimmed)
+    if (nodes.length > 0) return renderNode(nodes[0], opts)
+  }
+  return esc(trimmed)
 }
 
 // ── CSS generation ────────────────────────────────────────────────────────────
@@ -211,6 +227,8 @@ body{font-family:${theme.font.family};font-size:14px;color:${c.text};background:
 .wcf-button--secondary{background:${c.secondary.bg};color:${c.secondary.text};border-color:${c.secondary.border}}
 .wcf-button--ghost{background:${c.ghost.bg};color:${c.ghost.text};border-color:${c.ghost.border}}
 .wcf-button--danger{background:${c.danger.bg};color:${c.danger.text};border-color:${c.danger.border}}
+.wcf-button--align-left{justify-content:flex-start}
+.wcf-button--align-right{justify-content:flex-end}
 .wcf-button-group{display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap}
 .wcf-button-group--right{justify-content:flex-end}
 .wcf-button-group--center{justify-content:center}
@@ -254,6 +272,11 @@ select.wcf-input{cursor:default}
 .wcf-table td{padding:7px 12px;border-bottom:1px solid ${c.borderSubtle};color:${c.textMuted}}
 .wcf-table-filter{display:flex;gap:8px;align-items:center}
 .wcf-table-pagination{display:flex;gap:8px;align-items:center;justify-content:center;padding-top:4px}
+.wcf-table__row--link{cursor:pointer}
+.wcf-table__row--link:hover td{background:${c.surfaceBg}}
+.wcf-table__link{color:${c.primary.bg};text-decoration:underline;font-size:13px;cursor:pointer}
+.wcf-table__thumb{width:32px;height:32px;background:${c.surfaceBg};border:1px dashed ${c.border};border-radius:${theme.radius};display:inline-block}
+.wcf-button--sm{padding:2px 8px;font-size:12px}
 /* Overlay */
 .wcf-overlay--modal{border:1px solid ${c.border};border-radius:${theme.radius};background:${c.pageBg};max-width:480px;margin:40px auto;box-shadow:0 8px 32px rgba(0,0,0,.12);display:flex;flex-direction:column}
 .wcf-overlay--drawer{width:380px;background:${c.pageBg};border-left:1px solid ${c.border};box-shadow:-4px 0 16px rgba(0,0,0,.08);display:flex;flex-direction:column}

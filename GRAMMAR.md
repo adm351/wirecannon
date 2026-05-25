@@ -390,6 +390,7 @@ A single actionable element.
 | label     | string                           | yes      | required for model addressing      |
 | variant   | primary, secondary, ghost, danger | no      | default: secondary                 |
 | target    | screen-id or overlay-id          | no       | links to another screen or overlay |
+| align     | left, center, right              | no       | label alignment within the button, default: center |
 
 ### ButtonGroup
 
@@ -547,18 +548,25 @@ Permitted children: Input, ButtonGroup, Button, Text, Divider
 
 ### Table
 
-A structured data display with optional filtering and pagination.
-Column structure must be declared — the renderer has no basis to infer it.
+A structured data display. Row content is written as pipe-delimited child lines.
+The first child line defines column headers; subsequent lines are data rows.
+Cells may contain plain text or any inline component in `[Component ...]` syntax.
 
 ```
-[Table cols:"Name,Email,Role,Status" filter pagination]
+[Table filter pagination rowlink]
+  Name | Email | Status | Actions
+  John Smith | john@example.com | [Badge label:"Active" variant:success] | [Button label:"Edit" variant:ghost]
+  Jane Doe | jane@example.com | [Badge label:"Inactive" variant:danger] | [Button label:"Edit" variant:ghost]
 ```
 
-| Attribute  | Values                 | Required | Notes                                  |
-|------------|------------------------|----------|----------------------------------------|
-| cols       | comma-separated string | yes      | column names in display order          |
-| filter     | boolean                | no       | renders a filter row above the table   |
-| pagination | boolean                | no       | renders pagination controls below      |
+| Attribute  | Values  | Required | Notes                                     |
+|------------|---------|----------|-------------------------------------------|
+| filter     | boolean | no       | renders a filter input above the table    |
+| pagination | boolean | no       | renders pagination controls below         |
+| rowlink    | boolean | no       | rows are clickable, renders hover state   |
+
+Row lines are not components — they are pipe-delimited text and are not subject to
+component nesting or attribute rules. Comment keys valid on flow lines apply.
 
 ---
 

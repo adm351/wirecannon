@@ -96,7 +96,10 @@ function measureH(node: ParsedNode, width: number): number {
     case 'Icon': return 24
     case 'Divider': return node.attrs.orientation === 'vertical' ? 80 : 10
     case 'Input': return 36
-    case 'Table': return 40 + 3 * 36  // header + 3 data rows
+    case 'Table': {
+      const dataRows = node.children.filter(c => c.isFlowLine && c.raw).length
+      return 36 + Math.max(dataRows - 1, 3) * 36 // header + data rows (min 3)
+    }
     case 'List': return 4 * 22
     case 'Image': return Math.round((width - pad * 2) * 0.5625)
     case 'Branding': return 40
@@ -226,12 +229,16 @@ function paintLeaf(ln: LayoutNode, theme: Theme): string {
     case 'Button': {
       const label = a(node.attrs.label)
       const variant = a(node.attrs.variant) || 'secondary'
+      const align = a(node.attrs.align) || 'center'
       const isPrimary = variant === 'primary'
       const isDanger = variant === 'danger'
       const bg = isPrimary ? c.primary.bg : isDanger ? c.danger.bg : c.pageBg
       const stroke = isPrimary ? c.primary.border : isDanger ? c.danger.border : c.border
       const tc = isPrimary ? c.primary.text : isDanger ? c.danger.text : c.text
-      return box(b, bg, stroke, 4) + txt(cx, cy + 5, label, 12, tc, 'middle', 500)
+      const pad = 10
+      const tx = align === 'left' ? b.x + pad : align === 'right' ? b.x + b.w - pad : cx
+      const anchor = align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle'
+      return box(b, bg, stroke, 4) + txt(tx, cy + 5, label, 12, tc, anchor, 500)
     }
     case 'ButtonGroup': {
       const btns = node.children.filter(c => c.type === 'Button')
@@ -304,23 +311,36 @@ function paintLeaf(ln: LayoutNode, theme: Theme): string {
       return `<line x1="${vert ? b.x+b.w/2 : b.x}" y1="${vert ? b.y : b.y+b.h/2}" x2="${vert ? b.x+b.w/2 : b.x+b.w}" y2="${vert ? b.y+b.h : b.y+b.h/2}" stroke="${c.border}" stroke-width="1"/>`
     }
     case 'Table': {
-      const cols = a(node.attrs.cols).split(',').map(s => s.trim()).filter(Boolean)
-      if (!cols.length) return box(b, c.surfaceBg, c.border, 2)
-      const cw = b.w / cols.length
-      const rows: string[] = [box(b, c.pageBg, c.border, 2)]
-      // header
-      rows.push(`<rect x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(1)}" height="36" fill="${c.surfaceBg}" stroke="none"/>`)
-      rows.push(`<line x1="${b.x}" y1="${b.y+36}" x2="${b.x+b.w}" y2="${b.y+36}" stroke="${c.border}" stroke-width="1.5"/>`)
-      cols.forEach((col, i) => {
-        rows.push(txt(b.x + i * cw + 10, b.y + 24, col, 12, c.text, 'start', 600))
-        if (i > 0) rows.push(`<line x1="${b.x+i*cw}" y1="${b.y}" x2="${b.x+i*cw}" y2="${b.y+b.h}" stroke="${c.borderSubtle}" stroke-width="1"/>`)
+      const rowLines = node.children.filter(c => c.isFlowLine && c.raw)
+      const [headerLine, ...dataLines] = rowLines
+      const headers = headerLine ? headerLine.raw!.split('|').map(s => s.trim()) : ['Column']
+      if (!headers.length) return box(b, c.surfaceBg, c.border, 2)
+      const cw = b.w / headers.length
+      const out: string[] = [box(b, c.pageBg, c.border, 2)]
+      // header row
+      out.push(`<rect x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${b.w.toFixed(1)}" height="36" fill="${c.surfaceBg}" stroke="none"/>`)
+      out.push(`<line x1="${b.x}" y1="${b.y+36}" x2="${b.x+b.w}" y2="${b.y+36}" stroke="${c.border}" stroke-width="1.5"/>`)
+      headers.forEach((col, i) => {
+        out.push(txt(b.x + i * cw + 10, b.y + 24, col, 12, c.text, 'start', 600))
+        if (i > 0) out.push(`<line x1="${b.x+i*cw}" y1="${b.y}" x2="${b.x+i*cw}" y2="${b.y+b.h}" stroke="${c.borderSubtle}" stroke-width="1"/>`)
       })
-      for (let r = 0; r < 3; r++) {
-        const ry = b.y + 36 + r * 36
-        if (r > 0) rows.push(`<line x1="${b.x}" y1="${ry}" x2="${b.x+b.w}" y2="${ry}" stroke="${c.borderSubtle}" stroke-width="1"/>`)
-        cols.forEach((_, i) => rows.push(txt(b.x + i * cw + 10, ry + 23, '—', 12, c.textMuted)))
+      // data rows — strip inline component syntax to plain label for SVG
+      const svgCell = (cell: string) => {
+        const t = cell.trim()
+        if (t.startsWith('[') && t.includes(']')) {
+          const label = t.match(/label:"([^"]+)"/)?.[1] ?? t.match(/content:"([^"]+)"/)?.[1]
+          return label ?? (t.replace(/\[[^\]]*\]/, '').trim() || '—')
+        }
+        return t || '—'
       }
-      return rows.join('')
+      const rows = dataLines.length ? dataLines : Array(3).fill({ raw: headers.map(() => '—').join(' | ') } as { raw: string })
+      rows.forEach((row, r) => {
+        const ry = b.y + 36 + r * 36
+        if (r > 0) out.push(`<line x1="${b.x}" y1="${ry}" x2="${b.x+b.w}" y2="${ry}" stroke="${c.borderSubtle}" stroke-width="1"/>`)
+        const cells = (row.raw ?? '').split('|')
+        headers.forEach((_, i) => out.push(txt(b.x + i * cw + 10, ry + 23, svgCell(cells[i] ?? ''), 12, c.textMuted)))
+      })
+      return out.join('')
     }
     default:
       return box(b, c.surfaceBg, c.border) + txt(cx, cy + 5, node.type, 11, c.textSubtle, 'middle')

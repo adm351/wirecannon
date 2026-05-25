@@ -30,7 +30,9 @@ function parseLine(line: string, lineNum: number): ParsedNode | null {
   if (!trimmed || trimmed.startsWith('#')) return null
   const indent = line.length - trimmed.length
   if (!trimmed.startsWith('[')) {
-    return { type: '_flow', attrs: {}, children: [], line: lineNum, indent, isFlowLine: true }
+    const hashIdx = trimmed.indexOf('#')
+    const raw = (hashIdx >= 0 ? trimmed.slice(0, hashIdx) : trimmed).trim()
+    return { type: '_flow', attrs: {}, children: [], line: lineNum, indent, isFlowLine: true, raw }
   }
   const closeIdx = trimmed.indexOf(']')
   if (closeIdx < 0) return null

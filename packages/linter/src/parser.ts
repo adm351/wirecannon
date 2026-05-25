@@ -76,6 +76,7 @@ function parseLine(line: string, lineNum: number): ParsedNode | null {
 
   if (!trimmed.startsWith('[')) {
     const hashIdx = trimmed.indexOf('#')
+    const raw = (hashIdx >= 0 ? trimmed.slice(0, hashIdx) : trimmed).trim()
     const commentStr = hashIdx >= 0 ? trimmed.slice(hashIdx + 1).trim() : ''
     return {
       type: '_flow',
@@ -85,6 +86,7 @@ function parseLine(line: string, lineNum: number): ParsedNode | null {
       line: lineNum,
       indent,
       isFlowLine: true,
+      raw,
     }
   }
 
