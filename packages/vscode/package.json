@@ -4,6 +4,8 @@
   "description": "Wirecannon language support — linting, autocomplete, and preview",
   "version": "0.1.0",
   "publisher": "wirecannon",
+  "icon": "images/logo.png",
+  "repository": { "type": "git", "url": "https://github.com/wirecannon/wirecannon" },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Programming Languages", "Linters"],
   "main": "./dist/extension.js",

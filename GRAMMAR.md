@@ -290,8 +290,8 @@ Secondary column region. Declare position explicitly — both left and right are
 |-----------|-------------|----------|--------------------------------------|
 | position  | left, right | yes      | renderer cannot infer which side     |
 
-Permitted children: Section, any Layout, any Leaf
-Forbidden children: Header, Footer, Main, Nav, Card
+Permitted children: Nav, Section, any Layout, any Leaf
+Forbidden children: Header, Footer, Main, Card
 
 ### Main
 
@@ -304,8 +304,8 @@ Fills all space not occupied by Header, Footer, or Sidebar.
 
 No attributes. Dimensions are implicit.
 
-Permitted children: Section, Card, any Layout, any Leaf
-Forbidden children: Header, Footer, Sidebar, Nav
+Permitted children: Nav, Section, Card, any Layout, any Leaf
+Forbidden children: Header, Footer, Sidebar
 
 ### Section
 
@@ -320,8 +320,8 @@ Use to group related content that a model may need to address independently.
 |-----------|------------|----------|----------------------------------------------|
 | id        | kebab-case | yes when nested, recommended always | required for model addressing |
 
-Permitted children: Section (max 2 levels deep), Card, any Layout, any Leaf
-Forbidden children: Header, Footer, Sidebar, Main, Nav
+Permitted children: Nav, Section (max 2 levels deep), Card, any Layout, any Leaf
+Forbidden children: Header, Footer, Sidebar, Main
 
 Nesting limit: Sections may nest to a maximum depth of 2.
 A Section inside a Section inside a Section is a grammar error.

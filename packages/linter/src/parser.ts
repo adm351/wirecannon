@@ -118,11 +118,17 @@ export function parseFile(content: string): ParsedNode[] {
   const stack: Array<{ indent: number; node: ParsedNode }> = []
 
   for (let i = 0; i < lines.length; i++) {
-    const node = parseLine(lines[i], i + 1)
+    let node = parseLine(lines[i], i + 1)
     if (!node) continue
 
     while (stack.length > 0 && stack[stack.length - 1].indent >= node.indent) {
       stack.pop()
+    }
+
+    // Direct children of a Table are always row lines, not nested components.
+    const parent = stack.length > 0 ? stack[stack.length - 1].node : null
+    if (parent?.type === 'Table' && !node.isFlowLine) {
+      node = { type: '_flow', attrs: {}, comment: {}, children: [], line: node.line, indent: node.indent, isFlowLine: true, raw: lines[i].trimStart() }
     }
 
     if (stack.length === 0) {

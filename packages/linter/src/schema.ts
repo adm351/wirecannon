@@ -168,11 +168,11 @@ export function permittedChildren(parentType: string): Set<string> {
     case 'Footer':
       return new Set(['Nav', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Sidebar':
-      return new Set(['Section', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
+      return new Set(['Nav', 'Section', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Main':
-      return new Set(['Section', 'Card', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
+      return new Set(['Nav', 'Section', 'Card', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Section':
-      return new Set(['Section', 'Card', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
+      return new Set(['Nav', 'Section', 'Card', 'Table', ...LAYOUT_ARR, ...LEAF_ARR])
     case 'Nav':
       return new Set(LEAF_ARR)
     case 'Card':
