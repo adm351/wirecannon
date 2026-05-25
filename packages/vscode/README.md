@@ -2,7 +2,7 @@
 
 <img src="images/logo.png" width="80" alt="Wirecannon logo"/>
 
-Language support for [Wirecannon](https://github.com/wirecannon/wirecannon) — the text-based wireframing DSL for humans, models, and renderers.
+Language support for [Wirecannon](https://github.com/adm351/wirecannon) — the text-based wireframing DSL for humans, models, and renderers.
 
 ---
 
@@ -48,7 +48,7 @@ The preview updates as you type. Switching to a different `.wcf` file in the edi
 
 Errors appear as red underlines on the offending line. Hover to see the rule number and description. The Problems panel (`Cmd+Shift+M`) lists all errors across the project.
 
-Each rule maps to a constraint in the [Wirecannon grammar](https://github.com/wirecannon/wirecannon/blob/main/GRAMMAR.md). The rule number in parentheses (e.g. `[Rule 13]`) corresponds to the numbered rules in the Validation Rules section of the grammar spec.
+Each rule maps to a constraint in the [Wirecannon grammar](https://github.com/adm351/wirecannon/blob/main/GRAMMAR.md). The rule number in parentheses (e.g. `[Rule 13]`) corresponds to the numbered rules in the Validation Rules section of the grammar spec.
 
 ---
 
@@ -75,4 +75,4 @@ The extension locates the project root by walking up from the open file until it
 
 - [`@wirecannon/linter`](https://www.npmjs.com/package/@wirecannon/linter) — CLI linter
 - [`@wirecannon/renderer`](https://www.npmjs.com/package/@wirecannon/renderer) — HTML and SVG renderer
-- [Wirecannon grammar specification](https://github.com/wirecannon/wirecannon/blob/main/GRAMMAR.md)
+- [Wirecannon grammar specification](https://github.com/adm351/wirecannon/blob/main/GRAMMAR.md)
