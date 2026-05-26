@@ -2,6 +2,7 @@
   "name": "@wirecannon/renderer",
   "version": "0.1.0",
   "description": "Reference HTML/SVG renderer for Wirecannon .wcf files",
+  "repository": { "type": "git", "url": "https://github.com/adm351/wirecannon" },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {

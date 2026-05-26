@@ -1,6 +1,5 @@
 {
   "name": "wirecannon",
-  "private": true,
   "scripts": {
     "build": "npm run build --prefix packages/linter && npm run build --prefix packages/renderer && npm run build --prefix packages/vscode",
     "build:linter": "npm run build --prefix packages/linter",

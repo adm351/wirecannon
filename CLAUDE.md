@@ -11,6 +11,7 @@ CONTRIBUTING.md             ← contribution guidelines
 examples/                   ← reference projects using Wirecannon
 packages/linter/            ← validates .wcf files against the grammar
 packages/renderer/          ← produces HTML from .wcf files
+packages/vscode/            ← produces vscode plugin for linting, autocomplete and previews
 .claude/WIRECANNON.md       ← bootstrap file for repos that consume wirecannon
 ```
 

@@ -182,9 +182,9 @@ The full language specification is in `GRAMMAR.md`. It defines:
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| [`@wirecannon/linter`](packages/linter) | Validates `.wcf` files against the grammar | In progress |
-| [`@wirecannon/renderer`](packages/renderer) | Reference HTML renderer for visual verification | In progress |
-| [`@wirecannon/vscode`](packages/vscode) | VSCODE plugin for linting and previewing | In progress |
+| [`@wirecannon/linter`](packages/linter) | Validates `.wcf` files against the grammar | alpha |
+| [`@wirecannon/renderer`](packages/renderer) | Reference HTML renderer for visual verification | alpha |
+| [`@wirecannon/vscode`](packages/vscode) | VSCODE plugin for linting and previewing | alpha |
 
 ---
 
