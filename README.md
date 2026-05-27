@@ -29,7 +29,7 @@ Wireframes are `.wcf` files — plain text, square bracket syntax, two-space ind
   [Row align:space-between]
     [Image alt:"Acme logo"]                           # component=brand anchor=true
     [Nav orientation:horizontal]                      # component=nav-primary role=navigation
-    [ButtonGroup align:right]                         # region=header.actions
+    [ButtonGroup align:end]                         # region=header.actions
       [Button label:"Login" variant:ghost]            # action=auth-login priority=secondary
       [Button label:"Sign Up" variant:primary]        # action=auth-signup priority=primary anchor=true
 

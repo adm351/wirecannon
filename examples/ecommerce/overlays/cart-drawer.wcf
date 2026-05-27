@@ -21,6 +21,6 @@
         [Text content:"Subtotal" variant:label]
         [Text content:"$0.00" variant:body]                         # component=cart-subtotal depends-on=cart.items
       [Divider orientation:horizontal]
-      [ButtonGroup align:right]
+      [ButtonGroup align:end]
         [Button label:"Continue Shopping" variant:ghost target:product-list] # action=cart-continue priority=secondary
         [Button label:"Checkout" variant:primary target:checkout]             # action=checkout-begin priority=primary anchor=true

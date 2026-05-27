@@ -13,7 +13,7 @@
       [Form id:login-form]
         [Input type:email placeholder:"Email address"]
         [Input type:password placeholder:"Password"]
-        [ButtonGroup align:right]
+        [ButtonGroup align:end]
           [Button label:"Sign In" variant:primary]                 # action=auth-login priority=primary anchor=true
       [Divider orientation:horizontal]
       [Row align:center]
@@ -25,7 +25,7 @@
         [Input type:text placeholder:"Full name"]
         [Input type:email placeholder:"Email address"]
         [Input type:password placeholder:"Password"]
-        [ButtonGroup align:right]
+        [ButtonGroup align:end]
           [Button label:"Create Account" variant:primary]          # action=auth-signup priority=primary anchor=true
       [Divider orientation:horizontal]
       [Row align:center]

@@ -8,7 +8,7 @@
       [Nav orientation:horizontal]                                   # component=nav-primary role=navigation
         [Button label:"Home" variant:ghost target:home]
         [Button label:"Products" variant:ghost target:product-list]
-      [ButtonGroup align:right]                                      # region=header.actions
+      [ButtonGroup align:end]                                      # region=header.actions
         [Button label:"Cart" variant:ghost target:cart-drawer]       # action=cart-open triggers=cart-drawer priority=secondary
         [Button label:"Login" variant:ghost target:auth-modal]       # action=auth-login priority=secondary
         [Button label:"Sign Up" variant:primary target:auth-modal]   # action=auth-signup priority=primary anchor=true
@@ -25,7 +25,7 @@
         [Input type:number placeholder:"Min"]
         [Input type:number placeholder:"Max"]                      # depends-on=sidebar.filters.price-range
       [Divider orientation:horizontal]
-      [ButtonGroup align:right]
+      [ButtonGroup align:end]
         [Button label:"Apply" variant:primary]                     # action=filter-apply
         [Button label:"Clear" variant:ghost]                       # action=filter-clear
 
@@ -35,7 +35,11 @@
         [Text content:"Products" variant:heading]
         [Row gap:sm]
           [Input type:search placeholder:"Search products"]        # component=search-bar action=search-apply depends-on=sidebar.filters
-          [ButtonDropdown label:"Sort" variant:ghost options:"Price: Low to High,Price: High to Low,Newest,Bestselling"] # component=sort-control
+          [ButtonDropdown label:"Sort" variant:ghost]                    # component=sort-control
+            [Button label:"Price: Low to High"]
+            [Button label:"Price: High to Low"]
+            [Button label:"Newest"]
+            [Button label:"Bestselling"]
       [Grid cols:3 gap:md]                                         # component=product-grid state=populated todo="confirm col count at tablet breakpoint"
         [Card id:product-card]                                     # component=product-card
           [Image alt:"Product image"]
