@@ -31,6 +31,8 @@ function rowStyle(node: ParsedNode): string {
 
 function colStyle(node: ParsedNode): string {
   const parts: string[] = []
+  const align = attr(node.attrs.align)
+  if (align) parts.push(`justify-content:${JUSTIFY[align] ?? 'flex-start'}`)
   const gap = attr(node.attrs.gap)
   if (gap && GAP[gap]) parts.push(`gap:${GAP[gap]}`)
   const pad = attr(node.attrs.padding)
@@ -74,7 +76,9 @@ function renderNode(node: ParsedNode, opts: RenderOptions): string {
     }
     case 'Col': {
       const style = colStyle(node)
-      return `<div class="wcf-col"${style ? ` style="${style}"` : ''}>${renderChildren(node, opts)}</div>`
+      const grow = node.attrs.grow === true
+      const cls = `wcf-col${grow ? ' wcf-col--grow' : ''}`
+      return `<div class="${cls}"${style ? ` style="${style}"` : ''}>${renderChildren(node, opts)}</div>`
     }
     case 'Grid': {
       const cols = attr(node.attrs.cols) || '3'
@@ -98,13 +102,19 @@ function renderNode(node: ParsedNode, opts: RenderOptions): string {
       return `<button type="button" class="${cls}">${esc(label)}</button>`
     }
     case 'ButtonGroup': {
-      const align = attr(node.attrs.align) || 'left'
+      const align = attr(node.attrs.align) || 'start'
       return `<div class="wcf-button-group wcf-button-group--${align}">${renderChildren(node, opts)}</div>`
     }
     case 'ButtonDropdown': {
       const label = attr(node.attrs.label)
       const variant = attr(node.attrs.variant) || 'secondary'
-      return `<div class="wcf-button-dropdown"><button type="button" class="wcf-button wcf-button--${variant}">${esc(label)} <span aria-hidden="true">▾</span></button></div>`
+      const children = renderChildren(node, opts)
+      return (
+        `<details class="wcf-button-dropdown">` +
+        `<summary class="wcf-button wcf-button--${variant} wcf-dropdown-trigger">${esc(label)} <span class="wcf-dropdown-chevron" aria-hidden="true">▾</span></summary>` +
+        `<div class="wcf-dropdown-menu">${children}</div>` +
+        `</details>`
+      )
     }
     case 'Input': {
       const type = attr(node.attrs.type) || 'text'
@@ -207,6 +217,7 @@ body{font-family:${theme.font.family};font-size:14px;color:${c.text};background:
 .wcf-row--fill{flex:1;min-height:0}
 .wcf-row--grow{flex-grow:1}
 .wcf-col{display:flex;flex-direction:column}
+.wcf-col--grow{flex-grow:1;height:100%}
 .wcf-grid{display:grid}
 .wcf-stack{position:relative}
 .wcf-stack>*{position:absolute}
@@ -227,13 +238,23 @@ body{font-family:${theme.font.family};font-size:14px;color:${c.text};background:
 .wcf-button--secondary{background:${c.secondary.bg};color:${c.secondary.text};border-color:${c.secondary.border}}
 .wcf-button--ghost{background:${c.ghost.bg};color:${c.ghost.text};border-color:${c.ghost.border}}
 .wcf-button--danger{background:${c.danger.bg};color:${c.danger.text};border-color:${c.danger.border}}
+.wcf-button--label{background:transparent;border-color:transparent;padding:0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:${c.textMuted}}
 .wcf-button--align-left{justify-content:flex-start}
 .wcf-button--align-right{justify-content:flex-end}
 .wcf-button-group{display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap}
-.wcf-button-group--right{justify-content:flex-end}
+.wcf-button-group--end{justify-content:flex-end}
 .wcf-button-group--center{justify-content:center}
-.wcf-button-group--left{justify-content:flex-start}
-.wcf-button-dropdown{display:inline-flex}
+.wcf-button-group--start{justify-content:flex-start}
+.wcf-button-dropdown{display:inline-block;position:relative}
+.wcf-button-dropdown>summary.wcf-dropdown-trigger{list-style:none;cursor:default}
+.wcf-button-dropdown>summary.wcf-dropdown-trigger::-webkit-details-marker{display:none}
+.wcf-dropdown-chevron{display:inline-block;transition:transform .15s}
+.wcf-button-dropdown[open]>.wcf-dropdown-chevron,.wcf-button-dropdown[open] .wcf-dropdown-chevron{transform:rotate(180deg)}
+.wcf-dropdown-menu{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;background:${c.cardBg};border:1px solid ${c.border};border-radius:${theme.radius};box-shadow:0 4px 12px rgba(0,0,0,.12);padding:4px 0;z-index:10;white-space:nowrap;display:flex;flex-direction:column;gap:0}
+.wcf-dropdown-menu .wcf-button{width:100%;justify-content:flex-start;border-radius:0;border-color:transparent;background:transparent}
+.wcf-dropdown-menu .wcf-button:hover{background:${c.surfaceBg}}
+.wcf-dropdown-menu .wcf-divider{margin:3px 0}
+.wcf-dropdown-menu .wcf-text{padding:7px 14px;font-size:12px;color:${c.textSubtle}}
 /* Inputs */
 .wcf-input{width:100%;max-width:480px;padding:5px 10px;border:1px solid ${c.border};border-radius:${theme.radius};font-size:13px;background:${c.pageBg};color:${c.textMuted};font-family:inherit}
 .wcf-input--textarea,.wcf-input--editor{font-family:${theme.font.mono};resize:vertical}

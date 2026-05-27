@@ -21,8 +21,10 @@ export const COMPONENTS: Record<string, ComponentSchema> = {
   },
   Col: {
     attrs: {
+      align: { required: false, type: { enum: ['start', 'center', 'end', 'space-between', 'space-around'] } },
       gap: { required: false, type: { enum: ['sm', 'md', 'lg'] } },
       padding: { required: false, type: { enum: ['sm', 'md', 'lg'] } },
+      grow: { required: false, type: 'boolean' },
     },
   },
   Grid: {
@@ -67,21 +69,20 @@ export const COMPONENTS: Record<string, ComponentSchema> = {
   Button: {
     attrs: {
       label: { required: true, type: 'string' },
-      variant: { required: false, type: { enum: ['primary', 'secondary', 'ghost', 'danger'] } },
+      variant: { required: false, type: { enum: ['primary', 'secondary', 'ghost', 'danger', 'label'] } },
       target: { required: false, type: 'string' },
       align: { required: false, type: { enum: ['left', 'center', 'right'] } },
     },
   },
   ButtonGroup: {
     attrs: {
-      align: { required: false, type: { enum: ['left', 'right', 'center'] } },
+      align: { required: false, type: { enum: ['start', 'center', 'end'] } },
     },
   },
   ButtonDropdown: {
     attrs: {
       label: { required: true, type: 'string' },
       variant: { required: false, type: { enum: ['primary', 'secondary', 'ghost'] } },
-      options: { required: true, type: 'string' },
     },
   },
   Input: {
@@ -181,6 +182,8 @@ export function permittedChildren(parentType: string): Set<string> {
       return new Set() // row content is expressed as pipe-delimited flow lines, not component children
     case 'ButtonGroup':
       return new Set(['Button'])
+    case 'ButtonDropdown':
+      return new Set(['Button', 'Divider', 'Text'])
     case 'Form':
       return new Set(['Input', 'ButtonGroup', 'Button', 'Text', 'Divider'])
     default:

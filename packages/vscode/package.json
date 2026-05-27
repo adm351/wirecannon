@@ -2,7 +2,7 @@
   "name": "wirecannon",
   "displayName": "Wirecannon",
   "description": "Wirecannon language support — linting, autocomplete, and preview",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "adm351",
   "icon": "images/logo.png",
   "repository": { "type": "git", "url": "https://github.com/adm351/wirecannon" },

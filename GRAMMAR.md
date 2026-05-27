@@ -75,7 +75,7 @@ Comments contain semantic metadata as key=value pairs, space separated.
 Freeform annotations use `note` and `todo` keys with quoted values:
 
 ```
-[ButtonGroup align:right]    # region=header.actions priority=primary
+[ButtonGroup align:end]    # region=header.actions priority=primary
 [Button label:"Sign Up"]     # action=auth-signup note="primary CTA, do not move"
 ```
 
@@ -202,13 +202,15 @@ Permitted children: any Layout, any Structure, any Leaf
 Arranges children vertically.
 
 ```
-[Col gap:sm|md|lg padding:sm|md|lg]
+[Col align:start|center|end|space-between|space-around gap:sm|md|lg padding:sm|md|lg grow]
 ```
 
-| Attribute | Values    | Required | Notes                        |
-|-----------|-----------|----------|------------------------------|
-| gap       | sm, md, lg | no      | omit if children have no gap |
-| padding   | sm, md, lg | no      | omit if no internal padding  |
+| Attribute | Values                                          | Required | Notes                                      |
+|-----------|-------------------------------------------------|----------|--------------------------------------------|
+| align     | start, center, end, space-between, space-around | no       | controls vertical distribution of children |
+| gap       | sm, md, lg                                      | no       | omit if children have no gap               |
+| padding   | sm, md, lg                                      | no       | omit if no internal padding                |
+| grow      | boolean                                         | no       | set to make the col flex-grow and fill height |
 
 Permitted children: any Layout, any Structure, any Leaf
 
@@ -382,46 +384,51 @@ for a renderer or model to understand their purpose.
 A single actionable element.
 
 ```
-[Button label:"Label" variant:primary|secondary|ghost|danger target:screen-id|overlay-id]
+[Button label:"Label" variant:primary|secondary|ghost|danger|label target:screen-id|overlay-id]
 ```
 
-| Attribute | Values                           | Required | Notes                              |
-|-----------|----------------------------------|----------|------------------------------------|
-| label     | string                           | yes      | required for model addressing      |
-| variant   | primary, secondary, ghost, danger | no      | default: secondary                 |
-| target    | screen-id or overlay-id          | no       | links to another screen or overlay |
-| align     | left, center, right              | no       | label alignment within the button, default: center |
+| Attribute | Values                                  | Required | Notes                              |
+|-----------|-----------------------------------------|----------|------------------------------------|
+| label     | string                                  | yes      | required for model addressing      |
+| variant   | primary, secondary, ghost, danger, label | no      | default: secondary; `label` renders as an uppercase text label |
+| target    | screen-id or overlay-id                 | no       | links to another screen or overlay |
+| align     | left, center, right                     | no       | label alignment within the button, default: center |
 
 ### ButtonGroup
 
 A set of related Button components treated as a coupled unit.
 
 ```
-[ButtonGroup align:left|right|center]
+[ButtonGroup align:start|center|end]
   [Button label:"Cancel" variant:ghost]
   [Button label:"Save" variant:primary]
 ```
 
 | Attribute | Values              | Required | Notes                                        |
 |-----------|---------------------|----------|----------------------------------------------|
-| align     | left, right, center | no       | required when group position is not implicit |
+| align     | start, center, end  | no       | required when group position is not implicit |
 
 Permitted children: Button only
 
 ### ButtonDropdown
 
-A single button trigger that reveals a list of actions. Actions are declared inline
-as a comma-separated list. Individual actions do not have targets at wireframe fidelity.
+A single button trigger that reveals a menu when clicked. Menu items are declared as
+child components — typically `Button`, `Divider`, and `Text` (for section labels).
 
 ```
-[ButtonDropdown label:"Actions" variant:primary|secondary|ghost options:"Edit,Duplicate,Delete"]
+[ButtonDropdown label:"Actions" variant:ghost]
+  [Button label:"Edit"]
+  [Button label:"Duplicate"]
+  [Divider orientation:horizontal]
+  [Button label:"Delete" variant:danger]
 ```
 
-| Attribute | Values                           | Required | Notes                          |
-|-----------|----------------------------------|----------|--------------------------------|
-| label     | string                           | yes      | the trigger button label       |
-| variant   | primary, secondary, ghost        | no       | default: secondary             |
-| options   | comma-separated string           | yes      | the revealed action list       |
+| Attribute | Values                    | Required | Notes                          |
+|-----------|---------------------------|----------|--------------------------------|
+| label     | string                    | yes      | the trigger button label       |
+| variant   | primary, secondary, ghost | no       | default: secondary             |
+
+Permitted children: Button, Divider, Text
 
 ### Input
 
@@ -536,7 +543,7 @@ the renderer decides whether to draw a border or background.
 [Form id:form-id]
   [Input type:text placeholder:"Full name"]
   [Input type:email placeholder:"Email address"]
-  [ButtonGroup align:right]
+  [ButtonGroup align:end]
     [Button label:"Submit" variant:primary]
 ```
 
@@ -708,7 +715,7 @@ The root component of an overlay file must declare its presentation type:
   [Main]
     [List variant:unordered]               # component=cart-items state=populated
   [Footer]
-    [ButtonGroup align:right]
+    [ButtonGroup align:end]
       [Button label:"Checkout" variant:primary target:checkout]  # action=checkout-begin priority=primary anchor=true
 ```
 
@@ -787,7 +794,7 @@ When working with Wirecannon files a model must follow these rules:
       [Nav orientation:horizontal]                                   # component=nav-primary role=navigation
         [Button label:"Home" variant:ghost target:home]
         [Button label:"Products" variant:ghost target:product-list]
-      [ButtonGroup align:right]                                      # region=header.actions
+      [ButtonGroup align:end]                                      # region=header.actions
         [Button label:"Cart" variant:ghost target:cart-drawer]       # action=cart-open triggers=cart-drawer priority=secondary
         [Button label:"Login" variant:ghost target:auth-modal]       # action=auth-login priority=secondary
         [Button label:"Sign Up" variant:primary target:auth-modal]   # action=auth-signup priority=primary anchor=true
@@ -804,7 +811,7 @@ When working with Wirecannon files a model must follow these rules:
         [Input type:number placeholder:"Min"]
         [Input type:number placeholder:"Max"]                      # depends-on=sidebar.filters.price-range
       [Divider orientation:horizontal]
-      [ButtonGroup align:right]
+      [ButtonGroup align:end]
         [Button label:"Apply" variant:primary]                     # action=filter-apply
         [Button label:"Clear" variant:ghost]                       # action=filter-clear
 
@@ -814,7 +821,11 @@ When working with Wirecannon files a model must follow these rules:
         [Text content:"Products" variant:heading]
         [Row gap:sm]
           [Input type:search placeholder:"Search products"]        # component=search-bar action=search-apply depends-on=sidebar.filters
-          [ButtonDropdown label:"Sort" variant:ghost options:"Price: Low to High,Price: High to Low,Newest,Bestselling"] # component=sort-control
+          [ButtonDropdown label:"Sort" variant:ghost]                    # component=sort-control
+            [Button label:"Price: Low to High"]
+            [Button label:"Price: High to Low"]
+            [Button label:"Newest"]
+            [Button label:"Bestselling"]
       [Grid cols:3 gap:md]                                         # component=product-grid state=populated todo="confirm col count at tablet breakpoint"
         [Card id:product-card]                                     # component=product-card
           [Image alt:"Product image"]
