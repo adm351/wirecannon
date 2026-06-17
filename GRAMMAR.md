@@ -292,7 +292,7 @@ Secondary column region. Declare position explicitly — both left and right are
 |-----------|-------------|----------|--------------------------------------|
 | position  | left, right | yes      | renderer cannot infer which side     |
 
-Permitted children: Nav, Section, any Layout, any Leaf
+Permitted children: Nav, Section, Tabs, any Layout, any Leaf
 Forbidden children: Header, Footer, Main, Card
 
 ### Main
@@ -306,7 +306,7 @@ Fills all space not occupied by Header, Footer, or Sidebar.
 
 No attributes. Dimensions are implicit.
 
-Permitted children: Nav, Section, Card, any Layout, any Leaf
+Permitted children: Nav, Section, Card, Tabs, any Layout, any Leaf
 Forbidden children: Header, Footer, Sidebar
 
 ### Section
@@ -322,7 +322,7 @@ Use to group related content that a model may need to address independently.
 |-----------|------------|----------|----------------------------------------------|
 | id        | kebab-case | yes when nested, recommended always | required for model addressing |
 
-Permitted children: Nav, Section (max 2 levels deep), Card, any Layout, any Leaf
+Permitted children: Nav, Section (max 2 levels deep), Card, Tabs, any Layout, any Leaf
 Forbidden children: Header, Footer, Sidebar, Main
 
 Nesting limit: Sections may nest to a maximum depth of 2.
@@ -365,11 +365,36 @@ Cards cannot be nested inside other Cards.
 |-----------|------------|----------|-----------------------------------------------|
 | id        | kebab-case | yes when multiple Cards are siblings | required for model addressing |
 
-Permitted children: Header, Footer, Main, Section, any Layout, any Leaf
+Permitted children: Header, Footer, Main, Section, Tabs, any Layout, any Leaf
 Forbidden children: Sidebar, Nav, Card
 
 Permitted parents: Main, Section, Grid, Row, Col
 Forbidden parents: Header, Footer, Nav, Card
+
+### Tabs
+
+A tabbed region with multiple panels. Tabs are interactive in HTML/dev previews:
+clicking a tab button shows its matching panel and hides the other panels.
+SVG output shows the default active panel only.
+
+```
+[Tabs id:tabs-id]
+  [TabPanel id:overview label:"Overview" active]
+    [Text content:"Overview content" variant:body]
+  [TabPanel id:activity label:"Activity"]
+    [Text content:"Activity content" variant:body]
+```
+
+| Component | Attribute | Values     | Required | Notes                                  |
+|-----------|-----------|------------|----------|----------------------------------------|
+| Tabs      | id        | kebab-case | yes      | required for tab/panel addressing      |
+| TabPanel  | id        | kebab-case | yes      | unique within the file                 |
+| TabPanel  | label     | string     | yes      | rendered in the tab button             |
+| TabPanel  | active    | boolean    | no       | default visible panel; only one allowed |
+
+Permitted children: `Tabs` may contain `TabPanel` only.
+Permitted `TabPanel` children: Nav, Section, Card, Tabs, Table, any Layout, any Leaf
+Forbidden `TabPanel` parents: anything except Tabs
 
 ---
 
@@ -696,19 +721,22 @@ Overlay files follow the same DSL grammar as screen files.
 The root component of an overlay file must declare its presentation type:
 
 ```
-[Overlay type:modal|drawer|dialog]    # region=overlay role=...
+[Overlay type:modal|drawer|dialog position:left|center|right width:480px]    # region=overlay role=...
 ```
 
-| Attribute | Values                | Required | Notes                                     |
-|-----------|-----------------------|----------|-------------------------------------------|
-| type      | modal, drawer, dialog | yes      | drives how the renderer frames the overlay |
+| Attribute | Values                          | Required | Notes                                      |
+|-----------|---------------------------------|----------|--------------------------------------------|
+| type      | modal, drawer, dialog           | yes      | drives how the renderer frames the overlay |
+| anchor    | left, right, top, bottom        | no       | legacy drawer edge; `position` is preferred for dev previews |
+| position  | left, center, right             | no       | dev preview placement: left drawer, centered modal/dialog, or right drawer |
+| width     | CSS size, e.g. 420px, 32rem, 80vw | no     | dev preview and renderer panel width       |
 
-`modal` — centred, blocks background interaction
-`drawer` — slides in from an edge, requires `anchor:left|right|top|bottom`
+`modal` — centred, blocks background interaction; defaults to `position:center`
+`drawer` — slides in from an edge; defaults to `position:right` unless `anchor:left|right` is set
 `dialog` — compact, typically for confirmations
 
 ```
-[Overlay type:drawer anchor:right]    # region=cart role=checkout-flow
+[Overlay type:drawer position:right width:380px]    # region=cart role=checkout-flow
   [Header]
     [Text content:"Your Cart" variant:heading]
     [Button label:"Close" variant:ghost]   # action=cart-close
@@ -740,11 +768,13 @@ The following rules must be enforced by a linter or model before accepting a `.w
 10. Leaf components must not contain any children
 11. ButtonGroup must only contain Button components
 12. Form must only contain Input, ButtonGroup, Button, Text, and Divider
+12a. Tabs must contain at least one TabPanel; TabPanel is only permitted inside Tabs
 
 **Attributes**
 13. All required attributes must be present
-14. All attribute values must be from the defined enum where an enum is specified
+14. All attribute values must be from the defined enum or typed value constraint where specified
 15. Unknown attributes on any component are errors
+15a. Only one TabPanel in a Tabs set may be marked active
 
 **Comments**
 16. All comment keys must be from the validated vocabulary
@@ -826,13 +856,19 @@ When working with Wirecannon files a model must follow these rules:
             [Button label:"Price: High to Low"]
             [Button label:"Newest"]
             [Button label:"Bestselling"]
-      [Grid cols:3 gap:md]                                         # component=product-grid state=populated todo="confirm col count at tablet breakpoint"
-        [Card id:product-card]                                     # component=product-card
-          [Image alt:"Product image"]
-          [Text content:"Product name" variant:subheading]
-          [Text content:"$0.00" variant:body]
-          [Badge label:"In Stock" variant:success]                 # component=stock-status state=populated
-          [Button label:"Add to Cart" variant:primary]             # action=cart-add priority=primary
+      [Tabs id:product-tabs]                                      # component=product-tabs role=product-discovery
+        [TabPanel id:all-products label:"All Products" active]     # region=main.results.all-products state=populated
+          [Grid cols:3 gap:md]                                     # component=product-grid state=populated todo="confirm col count at tablet breakpoint"
+            [Card id:product-card]                                 # component=product-card
+              [Image alt:"Product image"]
+              [Text content:"Product name" variant:subheading]
+              [Text content:"$0.00" variant:body]
+              [Badge label:"In Stock" variant:success]             # component=stock-status state=populated
+              [Button label:"Add to Cart" variant:primary]         # action=cart-add priority=primary
+        [TabPanel id:new-arrivals label:"New Arrivals"]             # region=main.results.new-arrivals state=empty
+          [Text content:"Newest products appear here" variant:body]
+        [TabPanel id:sale label:"Sale"]                             # region=main.results.sale state=empty
+          [Text content:"Discounted products appear here" variant:body]
 
 [Footer]                                                           # region=footer anchor=true
   [Row align:space-between]

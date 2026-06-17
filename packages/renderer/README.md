@@ -38,3 +38,14 @@ npx @wirecannon/renderer ./wireframes/screens/product-list.wcf --out product-lis
 - Responsive breakpoints
 - Real data or assets
 - Framework-specific output
+
+## Packaged language docs
+
+When installed from npm, the language reference is included in the package:
+
+```
+node_modules/@wirecannon/renderer/docs/GRAMMAR.md
+```
+
+The `docs/` directory also includes the root README, changelog, contribution guide,
+and `WIRECANNON.md` model bootstrap instructions.

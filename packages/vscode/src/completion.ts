@@ -90,6 +90,9 @@ function attrKeyItems(componentType: string, usedAttrs: Set<string>, isIndex: bo
       if (attrSchema.type === 'boolean') {
         item.insertText = k
         item.detail = 'boolean flag'
+      } else if (attrSchema.type === 'css-size') {
+        item.insertText = `${k}:`
+        item.detail = 'CSS size'
       } else if (typeof attrSchema.type === 'object' && 'enum' in attrSchema.type) {
         item.insertText = `${k}:`
         item.detail = attrSchema.type.enum.join(' | ')

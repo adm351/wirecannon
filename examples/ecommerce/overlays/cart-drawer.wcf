@@ -1,7 +1,7 @@
 # overlays/cart-drawer.wcf
 # owner=cart-drawer
 
-[Overlay type:drawer anchor:right]                                  # region=cart role=checkout-flow
+[Overlay type:drawer position:right width:380px]                    # region=cart role=checkout-flow
 
   [Header]                                                          # region=cart.header anchor=true
     [Row align:space-between]

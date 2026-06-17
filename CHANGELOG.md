@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.1.2
+
+### Language
+
+- **Tabs** and **TabPanel** — new structure components for tabbed regions. `Tabs` requires an `id` and contains one or more `TabPanel` children; each panel requires `id` and `label`, with an optional `active` flag to mark the default visible panel (only one allowed). Permitted inside `Sidebar`, `Main`, `Section`, and `Card`
+- **Overlay** gains `position` (`left` / `center` / `right`) and `width` (CSS size, e.g. `480px`, `32rem`, `80vw`) attributes for dev-preview placement and panel sizing. `anchor` is retained for backward compatibility but `position` is preferred; `modal` defaults to `center`, `drawer` defaults to `right`
+
+### Dev server
+
+- **Overlay preview** — overlays render composited over a background screen rather than as standalone pages. Navigate via `/overlay/:id?from=:screenId`; clicking the scrim returns to the underlying screen
+- **Entry screen** — project manifest screens may declare `entry` to designate the default background screen for overlay previews
+
+### Renderer
+
+- **Tabs** render as interactive tab buttons in HTML output (click to switch panels); SVG output shows the active panel only
+- **Overlay** `position` and `width` attributes are reflected in generated CSS classes and inline styles
+
+### Packages
+
+- **Packaged docs** — `@wirecannon/linter` and `@wirecannon/renderer` npm packages now ship `GRAMMAR.md`, the root README, changelog, contribution guide, and `WIRECANNON.md` under `docs/` via a `prepack` hook
+
+### VS Code extension
+
+- Autocomplete now recognises the `css-size` attribute type (used by `Overlay width`)
+
+---
+
 ## 0.1.1
 
 ### Language

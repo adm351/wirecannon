@@ -57,6 +57,10 @@ function validateAttrs(node: ParsedNode, file: string): LintError[] {
       if (!KEBAB_CASE.test(value)) {
         errors.push(err(file, node.line, 23, `[${node.type}] attribute '${key}' value '${value}' must be kebab-case`))
       }
+    } else if (t === 'css-size') {
+      if (!/^\d+(\.\d+)?(px|rem|em|%|vw|vh|ch)$/.test(value)) {
+        errors.push(err(file, node.line, 14, `[${node.type}] attribute '${key}' must be a CSS size such as 420px, 32rem, or 80vw`))
+      }
     }
     // 'string' — any value is valid
   }
@@ -130,6 +134,8 @@ function walkNode(node: ParsedNode, parentType: string | null, sectionDepth: num
       const rule = nestingRule(parentType, node.type)
       ctx.errors.push(err(ctx.file, node.line, rule, `[${node.type}] is not permitted inside [${parentType}]`))
     }
+  } else if (node.type === 'TabPanel') {
+    ctx.errors.push(err(ctx.file, node.line, 9, '[TabPanel] is only permitted inside [Tabs]'))
   }
 
   // Rule 7: Section depth
@@ -146,6 +152,16 @@ function walkNode(node: ParsedNode, parentType: string | null, sectionDepth: num
   const componentChildren = node.children.filter(c => !c.isFlowLine)
   if (permitted.size === 0 && componentChildren.length > 0) {
     ctx.errors.push(err(ctx.file, node.line, 10, `[${node.type}] is a leaf component and must not have children`))
+  }
+  if (node.type === 'Tabs') {
+    const panels = componentChildren.filter(c => c.type === 'TabPanel')
+    if (panels.length === 0) {
+      ctx.errors.push(err(ctx.file, node.line, 9, '[Tabs] must contain at least one [TabPanel]'))
+    }
+    const activePanels = panels.filter(p => p.attrs.active === true || p.attrs.active === 'true')
+    if (activePanels.length > 1) {
+      ctx.errors.push(err(ctx.file, node.line, 14, '[Tabs] may only contain one active [TabPanel]'))
+    }
   }
 
   ctx.errors.push(...validateAttrs(node, ctx.file))

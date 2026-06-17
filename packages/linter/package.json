@@ -1,16 +1,24 @@
 {
   "name": "@wirecannon/linter",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Validates .wcf files against the Wirecannon grammar specification",
   "repository": { "type": "git", "url": "https://github.com/adm351/wirecannon" },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "package.json"
+  ],
   "bin": {
     "wirecannon-lint": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "prepack": "node ../../scripts/package-docs.js copy .",
+    "postpack": "node ../../scripts/package-docs.js clean ."
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
