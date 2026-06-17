@@ -11,6 +11,10 @@ function attr(s: string | true | undefined): string {
   return typeof s === 'string' ? s : ''
 }
 
+function cssSize(s: string): string {
+  return /^\d+(\.\d+)?(px|rem|em|%|vw|vh|ch)$/.test(s) ? s : ''
+}
+
 const GAP: Record<string, string> = { sm: '8px', md: '16px', lg: '24px' }
 const PAD: Record<string, string> = { sm: '8px', md: '16px', lg: '24px' }
 const JUSTIFY: Record<string, string> = {
@@ -46,6 +50,41 @@ function renderChildren(node: ParsedNode, opts: RenderOptions): string {
   return node.children.filter(c => !c.isFlowLine).map(c => renderNode(c, opts)).join('')
 }
 
+function renderTabs(node: ParsedNode, opts: RenderOptions): string {
+  const tabsId = attr(node.attrs.id)
+  const panels = node.children.filter(c => !c.isFlowLine && c.type === 'TabPanel')
+  const activeIdx = Math.max(0, panels.findIndex(p => p.attrs.active === true || p.attrs.active === 'true'))
+
+  const buttons = panels.map((panel, i) => {
+    const panelId = attr(panel.attrs.id)
+    const label = attr(panel.attrs.label)
+    const active = i === activeIdx
+    const cls = `wcf-tab${active ? ' wcf-tab--active' : ''}`
+    return (
+      `<button type="button" class="${cls}" role="tab" ` +
+      `aria-selected="${active ? 'true' : 'false'}" aria-controls="${esc(tabsId)}-${esc(panelId)}" ` +
+      `data-wcf-tab-panel="${esc(panelId)}" onclick="wcfSelectTab(this)">${esc(label)}</button>`
+    )
+  }).join('')
+
+  const panelHtml = panels.map((panel, i) => {
+    const panelId = attr(panel.attrs.id)
+    const active = i === activeIdx
+    const cls = `wcf-tab-panel${active ? ' wcf-tab-panel--active' : ''}`
+    return (
+      `<section class="${cls}" id="${esc(tabsId)}-${esc(panelId)}" role="tabpanel" ` +
+      `data-wcf-tab-panel="${esc(panelId)}"${active ? '' : ' hidden'}>${renderChildren(panel, opts)}</section>`
+    )
+  }).join('')
+
+  return (
+    `<div class="wcf-tabs" id="${esc(tabsId)}">` +
+    `<div class="wcf-tab-list" role="tablist">${buttons}</div>` +
+    `<div class="wcf-tab-panels">${panelHtml}</div>` +
+    `</div>`
+  )
+}
+
 function renderNode(node: ParsedNode, opts: RenderOptions): string {
   switch (node.type) {
     case 'Header': return `<header class="wcf-header">${renderChildren(node, opts)}</header>`
@@ -66,6 +105,11 @@ function renderNode(node: ParsedNode, opts: RenderOptions): string {
     case 'Card': {
       const id = attr(node.attrs.id)
       return `<div class="wcf-card"${id ? ` id="${esc(id)}"` : ''}>${renderChildren(node, opts)}</div>`
+    }
+    case 'Tabs': return renderTabs(node, opts)
+    case 'TabPanel': {
+      const id = attr(node.attrs.id)
+      return `<section class="wcf-tab-panel"${id ? ` id="${esc(id)}"` : ''}>${renderChildren(node, opts)}</section>`
     }
     case 'Row': {
       const style = rowStyle(node)
@@ -185,8 +229,12 @@ function renderNode(node: ParsedNode, opts: RenderOptions): string {
     case 'Overlay': {
       const type = attr(node.attrs.type) || 'modal'
       const anchor = attr(node.attrs.anchor)
+      const position = attr(node.attrs.position)
+      const width = cssSize(attr(node.attrs.width))
       const anchorClass = anchor ? ` wcf-overlay--${type}--${anchor}` : ''
-      return `<div class="wcf-overlay wcf-overlay--${type}${anchorClass}">${renderChildren(node, opts)}</div>`
+      const positionClass = position ? ` wcf-overlay--position-${position}` : ''
+      const style = width ? ` style="width:${esc(width)}"` : ''
+      return `<div class="wcf-overlay wcf-overlay--${type}${anchorClass}${positionClass}"${style}>${renderChildren(node, opts)}</div>`
     }
     default: return ''
   }
@@ -232,6 +280,15 @@ body{font-family:${theme.font.family};font-size:14px;color:${c.text};background:
 .wcf-nav--horizontal{display:flex;flex-direction:row;align-items:center;gap:4px}
 .wcf-nav--vertical{display:flex;flex-direction:column;gap:2px}
 .wcf-card{border:1px solid ${c.border};border-radius:${theme.radius};padding:16px;background:${c.cardBg};display:flex;flex-direction:column;gap:12px}
+/* Tabs */
+.wcf-tabs{display:flex;flex-direction:column;gap:12px}
+.wcf-tab-list{display:flex;align-items:center;gap:4px;border-bottom:1px solid ${c.border}}
+.wcf-tab{appearance:none;background:transparent;border:none;border-bottom:2px solid transparent;color:${c.textMuted};padding:8px 12px;margin-bottom:-1px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.wcf-tab:hover{color:${c.text}}
+.wcf-tab--active{color:${c.text};border-bottom-color:${c.primary.bg}}
+.wcf-tab-panels{display:flex;flex-direction:column}
+.wcf-tab-panel{display:none;flex-direction:column;gap:12px}
+.wcf-tab-panel--active{display:flex}
 /* Buttons */
 .wcf-button{display:inline-flex;align-items:center;justify-content:center;padding:5px 14px;border-radius:${theme.radius};font-size:13px;font-weight:500;cursor:default;border:1px solid transparent;text-decoration:none;line-height:1.5;white-space:nowrap;font-family:inherit}
 .wcf-button--primary{background:${c.primary.bg};color:${c.primary.text};border-color:${c.primary.border}}
@@ -327,6 +384,23 @@ export function renderHtmlDocument(nodes: ParsedNode[], theme: Theme, opts: Rend
 <div class="wcf-screen">
 ${body}
 </div>
+<script>
+function wcfSelectTab(trigger) {
+  var root = trigger.closest('.wcf-tabs')
+  if (!root) return
+  var target = trigger.getAttribute('data-wcf-tab-panel')
+  root.querySelectorAll('.wcf-tab').forEach(function(tab) {
+    var selected = tab === trigger
+    tab.classList.toggle('wcf-tab--active', selected)
+    tab.setAttribute('aria-selected', selected ? 'true' : 'false')
+  })
+  root.querySelectorAll('.wcf-tab-panel').forEach(function(panel) {
+    var active = panel.getAttribute('data-wcf-tab-panel') === target
+    panel.classList.toggle('wcf-tab-panel--active', active)
+    panel.hidden = !active
+  })
+}
+</script>
 </body>
 </html>`
 }

@@ -40,13 +40,19 @@
             [Button label:"Price: High to Low"]
             [Button label:"Newest"]
             [Button label:"Bestselling"]
-      [Grid cols:3 gap:md]                                         # component=product-grid state=populated todo="confirm col count at tablet breakpoint"
-        [Card id:product-card]                                     # component=product-card
-          [Image alt:"Product image"]
-          [Text content:"Product name" variant:subheading]
-          [Text content:"$0.00" variant:body]
-          [Badge label:"In Stock" variant:success]                 # component=stock-status state=populated
-          [Button label:"Add to Cart" variant:primary]             # action=cart-add priority=primary
+      [Tabs id:product-tabs]                                      # component=product-tabs role=product-discovery
+        [TabPanel id:all-products label:"All Products" active]     # region=main.results.all-products state=populated
+          [Grid cols:3 gap:md]                                     # component=product-grid state=populated todo="confirm col count at tablet breakpoint"
+            [Card id:product-card]                                 # component=product-card
+              [Image alt:"Product image"]
+              [Text content:"Product name" variant:subheading]
+              [Text content:"$0.00" variant:body]
+              [Badge label:"In Stock" variant:success]             # component=stock-status state=populated
+              [Button label:"Add to Cart" variant:primary]         # action=cart-add priority=primary
+        [TabPanel id:new-arrivals label:"New Arrivals"]             # region=main.results.new-arrivals state=empty
+          [Text content:"Newest products appear here" variant:body]
+        [TabPanel id:sale label:"Sale"]                             # region=main.results.sale state=empty
+          [Text content:"Discounted products appear here" variant:body]
 
 [Footer]                                                           # region=footer anchor=true
   [Row align:space-between]

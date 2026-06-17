@@ -28,4 +28,13 @@ npx @wirecannon/linter ./wireframes
 
 ## Validation rules
 
-All 23 validation rules are defined in `GRAMMAR.md` in the project root.
+All validation rules are defined in `GRAMMAR.md`.
+
+When installed from npm, the language reference is included in the package:
+
+```
+node_modules/@wirecannon/linter/docs/GRAMMAR.md
+```
+
+The `docs/` directory also includes the root README, changelog, contribution guide,
+and `WIRECANNON.md` model bootstrap instructions.

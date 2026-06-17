@@ -54,6 +54,17 @@ function measureH(node: ParsedNode, width: number): number {
       const total = kids.reduce((s, k) => s + measureH(k, width - pad * 2), 0)
       return total + (kids.length - 1) * g + pad * 2
     }
+    case 'Tabs': {
+      const panels = kids.filter(k => k.type === 'TabPanel')
+      const active = panels.find(p => p.attrs.active === true || p.attrs.active === 'true') ?? panels[0]
+      return 48 + (active ? measureH(active, width - pad * 2) : 120) + pad * 2
+    }
+    case 'TabPanel': {
+      if (!kids.length) return 120
+      const g = gap || 12
+      const total = kids.reduce((s, k) => s + measureH(k, width - pad * 2), 0)
+      return total + (kids.length - 1) * g + pad * 2
+    }
     case 'Main': {
       if (!kids.length) return 300
       const g = gap || 12
@@ -187,6 +198,19 @@ function layout(node: ParsedNode, box: Box): LayoutNode {
           childNodes.push(layout(k, { x, y: box.y + (box.h - 32) / 2, w: btnW, h: 32 }))
           x += btnW + 8
         }
+      }
+      break
+    }
+    case 'Tabs': {
+      const panels = kids.filter(k => k.type === 'TabPanel')
+      const active = panels.find(p => p.attrs.active === true || p.attrs.active === 'true') ?? panels[0]
+      if (active) {
+        childNodes.push(layout(active, {
+          x: box.x + pad,
+          y: box.y + pad + 48,
+          w: box.w - pad * 2,
+          h: measureH(active, box.w - pad * 2),
+        }))
       }
       break
     }
@@ -364,9 +388,23 @@ function paintNode(ln: LayoutNode, theme: Theme): string {
       const label = `Nav ${a(node.attrs.orientation) || 'horizontal'}`
       return box(b, c.surfaceBg, c.borderSubtle, 2) + (ln.children.length ? childSvg : txt(b.x + 8, b.y + 16, label, 11, c.textSubtle))
     }
+    case 'Tabs': {
+      const panels = node.children.filter(child => child.type === 'TabPanel')
+      const active = panels.find(panel => panel.attrs.active === true || panel.attrs.active === 'true') ?? panels[0]
+      const tabW = panels.length ? Math.min(140, b.w / panels.length) : 120
+      const tabSvg = panels.map((panel, i) => {
+        const x = b.x + i * tabW
+        const isActive = panel === active
+        const fill = isActive ? c.pageBg : c.surfaceBg
+        const stroke = isActive ? c.primary.border : c.borderSubtle
+        return box({ x, y: b.y, w: tabW, h: 36 }, fill, stroke, 3) +
+          txt(x + tabW / 2, b.y + 23, a(panel.attrs.label), 12, isActive ? c.text : c.textMuted, 'middle', isActive ? 600 : 400)
+      }).join('')
+      return box(b, c.pageBg, c.borderSubtle, 3) + tabSvg + childSvg
+    }
     // transparent containers
     case 'Row': case 'Col': case 'Grid': case 'Stack':
-    case 'Section': case 'Form': case 'ButtonGroup':
+    case 'Section': case 'TabPanel': case 'Form': case 'ButtonGroup':
       return childSvg
     default:
       return paintLeaf(ln, theme)
@@ -385,6 +423,10 @@ function labelNode(ln: LayoutNode, theme: Theme): string {
     case 'Section': {
       const id = a(node.attrs.id)
       return (id ? txt(b.x + 2, b.y + 10, `§${id}`, 8, c) : '') + childLabels
+    }
+    case 'Tabs': {
+      const id = a(node.attrs.id)
+      return (id ? txt(b.x + 2, b.y + 10, `Tabs·${id}`, 8, c) : '') + childLabels
     }
     default: return childLabels
   }

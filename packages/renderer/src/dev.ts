@@ -9,11 +9,12 @@ import { generateCss, renderHtmlFragment } from './html'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface ScreenEntry { id: string; label: string; file: string; kind: 'screen' | 'overlay' }
+interface ScreenEntry { id: string; label: string; file: string; kind: 'screen' | 'overlay'; entry?: boolean }
 interface FlowEdge { from: string; to: string; label?: string }
 interface FlowDef { id: string; label: string; nodes: string[]; edges: FlowEdge[] }
 interface ProjectData { entries: ScreenEntry[]; flows: FlowDef[] }
 interface GNode { id: string; x: number; y: number }
+interface OverlayPresentation { position: 'left' | 'center' | 'right'; width?: string }
 
 // ── Lint ──────────────────────────────────────────────────────────────────────
 
@@ -85,7 +86,8 @@ function loadProject(projectRoot: string): ProjectData {
         const id = typeof s.attrs.id === 'string' ? s.attrs.id : ''
         const label = typeof s.attrs.label === 'string' ? s.attrs.label : id
         const file = typeof s.attrs.file === 'string' ? path.join(projectRoot, s.attrs.file) : ''
-        if (id && file && fs.existsSync(file)) entries.push({ id, label, file, kind: 'screen' })
+        const entry = s.attrs.entry === true || s.attrs.entry === 'true'
+        if (id && file && fs.existsSync(file)) entries.push({ id, label, file, kind: 'screen', entry })
       }
     }
     if (top.type === 'Overlays') {
@@ -297,26 +299,59 @@ const LOGO_SVG =
   `<rect x="60" y="52" width="36" height="40" rx="3" fill="#242438" stroke="#e06c35" stroke-width="2"/>` +
   `</svg>`
 
+function firstScreen(data: ProjectData): ScreenEntry | undefined {
+  return data.entries.find(e => e.kind === 'screen' && e.entry) ??
+    data.entries.find(e => e.kind === 'screen')
+}
+
+function cssSize(s: string): string {
+  return /^\d+(\.\d+)?(px|rem|em|%|vw|vh|ch)$/.test(s) ? s : ''
+}
+
+function overlayPresentation(nodes: ParsedNode[]): OverlayPresentation {
+  const root = nodes.find(n => n.type === 'Overlay')
+  const type = typeof root?.attrs.type === 'string' ? root.attrs.type : 'modal'
+  const anchor = typeof root?.attrs.anchor === 'string' ? root.attrs.anchor : ''
+  const positionAttr = typeof root?.attrs.position === 'string' ? root.attrs.position : ''
+  const widthAttr = typeof root?.attrs.width === 'string' ? cssSize(root.attrs.width) : ''
+
+  const position = positionAttr === 'left' || positionAttr === 'right' || positionAttr === 'center'
+    ? positionAttr
+    : anchor === 'left' || anchor === 'right'
+      ? anchor
+      : type === 'drawer'
+        ? 'right'
+        : 'center'
+
+  return { position, width: widthAttr || undefined }
+}
+
 function renderPage(
   data: ProjectData,
   activeScreenId: string | null,
   wcfPath: string,
   themeName: string,
   activeFlowId: string | null,
+  activeOverlayId: string | null = null,
 ): string {
   const { entries, flows } = data
   const isFlow = activeFlowId !== null
-  const activeEntry = entries.find(e => e.id === activeScreenId)
+  const activeEntry = activeOverlayId
+    ? entries.find(e => e.id === activeOverlayId)
+    : entries.find(e => e.id === activeScreenId)
   const activeFlow = flows.find(f => f.id === activeFlowId)
 
   // ── Sidebar: screens list ────────────────────────────────────────────────
   const screenItems = entries.length > 0
     ? entries.map(e => {
-        const active = !isFlow && e.id === activeScreenId
+        const active = !isFlow && e.id === (activeOverlayId ?? activeScreenId)
         const kindTag = e.kind === 'overlay'
           ? `<span class="kind-tag">overlay</span>` : ''
+        const href = e.kind === 'overlay'
+          ? `/overlay/${e.id}?from=${encodeURIComponent(activeScreenId ?? firstScreen(data)?.id ?? '')}&theme=${themeName}`
+          : `/view/${e.id}?theme=${themeName}`
         return (
-          `<a href="/view/${e.id}?theme=${themeName}" ` +
+          `<a href="${href}" ` +
           `class="nav-item${active ? ' active' : ''}" ` +
           `data-label="${xe(e.label.toLowerCase())}">${xe(e.label)}${kindTag}</a>`
         )
@@ -357,13 +392,41 @@ function renderPage(
   } else {
     const theme = getTheme(themeName)
     extraCss = generateCss(theme)
-    const targets = new Map(entries.map(e => [e.id, `/view/${e.id}?theme=${themeName}`]))
+    const targets = new Map(entries.map(e => [
+      e.id,
+      e.kind === 'overlay'
+        ? `/overlay/${e.id}?from=${encodeURIComponent(activeScreenId ?? firstScreen(data)?.id ?? '')}&theme=${themeName}`
+        : `/view/${e.id}?theme=${themeName}`,
+    ]))
     const wcfContent = wcfPath && fs.existsSync(wcfPath) ? fs.readFileSync(wcfPath, 'utf-8') : ''
     const wireHtml = renderHtmlFragment(parseFile(wcfContent), {
       theme: themeName as 'bw' | 'flexoki',
       targets,
     })
-    mainContent = `<div class="wcf-frame"><div class="wcf-screen">${wireHtml}</div></div>`
+    let overlayHtml = ''
+    const overlayEntry = activeOverlayId ? entries.find(e => e.id === activeOverlayId && e.kind === 'overlay') : undefined
+    if (overlayEntry && fs.existsSync(overlayEntry.file)) {
+      const overlayContent = fs.readFileSync(overlayEntry.file, 'utf-8')
+      const overlayNodes = parseFile(overlayContent)
+      const presentation = overlayPresentation(overlayNodes)
+      const overlayTargets = new Map(entries.map(e => [
+        e.id,
+        e.kind === 'overlay'
+          ? `/overlay/${e.id}?from=${encodeURIComponent(activeScreenId ?? firstScreen(data)?.id ?? '')}&theme=${themeName}`
+          : `/view/${e.id}?theme=${themeName}`,
+      ]))
+      const overlayStyle = presentation.width ? ` style="--wcf-dev-overlay-width:${xe(presentation.width)}"` : ''
+      const closeHref = `/view/${activeScreenId ?? firstScreen(data)?.id ?? ''}?theme=${encodeURIComponent(themeName)}`
+      overlayHtml =
+        `<div class="dev-overlay dev-overlay--${presentation.position}"${overlayStyle}>` +
+        `<a class="dev-overlay__scrim" href="${xe(closeHref)}" aria-label="Close overlay"></a>` +
+        `<div class="dev-overlay__panel">${renderHtmlFragment(overlayNodes, {
+          theme: themeName as 'bw' | 'flexoki',
+          targets: overlayTargets,
+        })}</div>` +
+        `</div>`
+    }
+    mainContent = `<div class="wcf-frame"><div class="wcf-screen">${wireHtml}</div>${overlayHtml}</div>`
   }
 
   const pageTitle = isFlow
@@ -427,7 +490,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
 /* ── Wireframe view ── */
 .screen-wrap{flex:1;overflow:auto;padding:32px}
-.wcf-frame{background:white;box-shadow:0 4px 28px rgba(0,0,0,.16);min-height:calc(100vh - 102px)}
+.wcf-frame{position:relative;overflow:hidden;background:white;box-shadow:0 4px 28px rgba(0,0,0,.16);min-height:calc(100vh - 102px)}
 
 /* ── Flow view ── */
 .flow-wrap{flex:1;overflow:auto;padding:32px}
@@ -440,6 +503,17 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 ${extraCss}
 /* dev override — higher specificity beats generateCss's min-height:100vh */
 .wcf-frame .wcf-screen{min-height:calc(100vh - 102px)}
+.dev-overlay{--wcf-dev-overlay-width:480px;position:absolute;inset:0;display:flex;z-index:20;pointer-events:auto}
+.dev-overlay__scrim{position:absolute;inset:0;background:rgba(22,21,20,.42);cursor:pointer}
+.dev-overlay__panel{position:relative;z-index:1;display:flex;max-width:100%;max-height:100%}
+.dev-overlay--center{align-items:center;justify-content:center;padding:32px}
+.dev-overlay--left{align-items:stretch;justify-content:flex-start}
+.dev-overlay--right{align-items:stretch;justify-content:flex-end}
+.dev-overlay .wcf-overlay{width:var(--wcf-dev-overlay-width);max-width:calc(100vw - 296px);max-height:100%;overflow:auto}
+.dev-overlay--center .wcf-overlay{margin:0;max-width:min(var(--wcf-dev-overlay-width),calc(100vw - 360px));max-height:calc(100vh - 166px)}
+.dev-overlay--left .wcf-overlay,.dev-overlay--right .wcf-overlay{height:100%;margin:0;border-radius:0}
+.dev-overlay--left .wcf-overlay{border-left:none;border-top:none;border-bottom:none;box-shadow:4px 0 18px rgba(0,0,0,.16)}
+.dev-overlay--right .wcf-overlay{border-right:none;border-top:none;border-bottom:none;box-shadow:-4px 0 18px rgba(0,0,0,.16)}
 /* hotspot pulse */
 @keyframes wcf-hs-ping{0%{box-shadow:0 0 0 0 rgba(224,108,53,.75)}100%{box-shadow:0 0 0 14px rgba(224,108,53,0)}}
 .wcf-hs{animation:wcf-hs-ping .85s ease-out both}
@@ -517,6 +591,22 @@ function changeTheme(t) {
   var url = new URL(location.href)
   url.searchParams.set('theme', t)
   location.href = url.toString()
+}
+
+function wcfSelectTab(trigger) {
+  var root = trigger.closest('.wcf-tabs')
+  if (!root) return
+  var target = trigger.getAttribute('data-wcf-tab-panel')
+  root.querySelectorAll('.wcf-tab').forEach(function(tab) {
+    var selected = tab === trigger
+    tab.classList.toggle('wcf-tab--active', selected)
+    tab.setAttribute('aria-selected', selected ? 'true' : 'false')
+  })
+  root.querySelectorAll('.wcf-tab-panel').forEach(function(panel) {
+    var active = panel.getAttribute('data-wcf-tab-panel') === target
+    panel.classList.toggle('wcf-tab-panel--active', active)
+    panel.hidden = !active
+  })
 }
 
 window.addEventListener('load', function() {
@@ -597,7 +687,31 @@ export async function startDevServer(target: string, options: { theme?: string; 
           const id = viewMatch[1]
           const entry = data.entries.find(e => e.id === id) ?? data.entries[0]
           if (!entry) { next(); return }
+          if (entry.kind === 'overlay') {
+            const background = firstScreen(data)
+            if (!background) { next(); return }
+            const html = renderPage(data, background.id, background.file, qTheme, null, entry.id)
+            const transformed = await server.transformIndexHtml(req.url!, html)
+            res.setHeader('Content-Type', 'text/html; charset=utf-8')
+            res.end(transformed)
+            return
+          }
           const html = renderPage(data, entry.id, entry.file, qTheme, null)
+          const transformed = await server.transformIndexHtml(req.url!, html)
+          res.setHeader('Content-Type', 'text/html; charset=utf-8')
+          res.end(transformed)
+          return
+        }
+
+        // Overlay view: render over a background screen instead of as a separate screen
+        const overlayMatch = pathname.match(/^\/overlay\/(.+)$/)
+        if (overlayMatch) {
+          const id = overlayMatch[1]
+          const overlay = data.entries.find(e => e.id === id && e.kind === 'overlay')
+          const from = url.searchParams.get('from')
+          const background = (from ? data.entries.find(e => e.id === from && e.kind === 'screen') : undefined) ?? firstScreen(data)
+          if (!overlay || !background) { next(); return }
+          const html = renderPage(data, background.id, background.file, qTheme, null, overlay.id)
           const transformed = await server.transformIndexHtml(req.url!, html)
           res.setHeader('Content-Type', 'text/html; charset=utf-8')
           res.end(transformed)

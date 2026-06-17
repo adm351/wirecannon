@@ -1,7 +1,7 @@
 # overlays/auth-modal.wcf
 # owner=auth-modal
 
-[Overlay type:modal]                                               # region=auth role=authentication
+[Overlay type:modal position:center width:480px]                   # region=auth role=authentication
 
   [Header]                                                         # region=auth.header anchor=true
     [Row align:space-between]
